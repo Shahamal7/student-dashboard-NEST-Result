@@ -10,7 +10,7 @@
 // Paste your Google Apps Script Web App URL between the quotes.
 // It looks like: https://script.google.com/macros/s/AKfycb..../exec
 // Do NOT put passwords, keys or tokens in this file — it is public.
-const API_URL = "https://script.google.com/a/macros/xylemlearning.com/s/AKfycbyy1Ggrgc-q8oi2PzRa4uDipDM3Ta2FslLoUeYscdwgQyedCP-9_3IpXhi2zLELSfbj/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzA9CrGfKN2jpvp6W75zIDGAoMl9GokphyAJSbdj5kDuzp5GtdNMj1xnLOctax_Su0/exec";
 
 // Optional: how many rows each table page shows.
 const PAGE_SIZE = 50;
