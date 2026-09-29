@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Performance Dashboard</title>
+  <meta name="description" content="Live student performance dashboard powered by Google Sheets.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="app-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <h1>Student Performance Dashboard</h1>
+        <p class="last-updated" id="lastUpdated" aria-live="polite">Last Updated: —</p>
+      </div>
+      <div class="header-actions">
+        <span id="refreshStatus" class="refresh-status" aria-live="polite"></span>
+        <button id="refreshBtn" class="btn btn-primary" type="button">Refresh Data</button>
+      </div>
+    </div>
+    <nav class="container tabs" aria-label="Main navigation">
+      <a href="#dashboard" class="tab" data-view="dashboard">Dashboard</a>
+      <a href="#schools" class="tab" data-view="schools">Schools</a>
+    </nav>
+  </header>
+
+  <main id="main" class="container" tabindex="-1">
+    <!-- Messages -->
+    <div id="errorBanner" class="alert alert-error" role="alert" hidden></div>
+    <div id="warningBox" class="alert alert-warning" role="status" hidden></div>
+
+    <!-- Loading state -->
+    <section id="loadingState" class="state-box" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Loading student data...</p>
+    </section>
+
+    <!-- Error state -->
+    <section id="errorState" class="state-box state-error" role="alert" hidden>
+      <h2 id="errorTitle">Unable to connect to the database.</h2>
+      <p id="errorMessage">Please try again.</p>
+      <button id="retryBtn" class="btn btn-primary" type="button">Retry</button>
+    </section>
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <section id="view-dashboard" class="view" aria-labelledby="dashHeading" hidden>
+      <h2 id="dashHeading" class="sr-only">Dashboard</h2>
+
+      <!-- KPI cards -->
+      <div class="kpi-grid">
+        <article class="kpi">
+          <h3 class="kpi-label">Total Students</h3>
+          <p class="kpi-value" id="kpiStudents">—</p>
+          <p class="kpi-sub" id="kpiStudentsSub"></p>
+        </article>
+        <article class="kpi">
+          <h3 class="kpi-label">Total Schools</h3>
+          <p class="kpi-value" id="kpiSchools">—</p>
+        </article>
+        <article class="kpi">
+          <h3 class="kpi-label">Total Districts</h3>
+          <p class="kpi-value" id="kpiDistricts">—</p>
+        </article>
+        <article class="kpi">
+          <h3 class="kpi-label">Total Exam Centres</h3>
+          <p class="kpi-value" id="kpiCentres">—</p>
+        </article>
+        <article class="kpi">
+          <h3 class="kpi-label">JEE/NEET Students</h3>
+          <p class="kpi-value" id="kpiExam">—</p>
+          <p class="kpi-sub" id="kpiExamSub"></p>
+        </article>
+      </div>
+
+      <!-- Filters -->
+      <section class="card" aria-labelledby="filtersHeading">
+        <div class="card-head">
+          <h2 id="filtersHeading">Search &amp; Filters</h2>
+          <span id="filterStatus" class="muted" aria-live="polite"></span>
+        </div>
+        <div class="search-row">
+          <div class="field field-search">
+            <label for="searchInput">Search students</label>
+            <input type="search" id="searchInput" autocomplete="off"
+                   placeholder="Roll No, name, school, code, district or exam centre">
+          </div>
+          <button id="resetBtn" class="btn btn-secondary" type="button">Reset Filters</button>
+        </div>
+        <div class="filter-grid">
+          <div class="field"><label for="fDistrict">District</label><select id="fDistrict"></select></div>
+          <div class="field"><label for="fSchool">School</label><select id="fSchool"></select></div>
+          <div class="field"><label for="fCentre">Exam Centre</label><select id="fCentre"></select></div>
+          <div class="field"><label for="fScholarship">Scholarship</label><select id="fScholarship"></select></div>
+          <div class="field"><label for="fExam">JEE/NEET</label><select id="fExam"></select></div>
+          <div class="field"><label for="fCode">Code</label><select id="fCode"></select></div>
+        </div>
+      </section>
+
+      <!-- Summary tables -->
+      <div class="summary-grid" id="summaryGrid">
+        <article class="card summary" id="sumDistrict"><div class="card-head"><h2>Students by District</h2></div><div class="summary-body"></div></article>
+        <article class="card summary" id="sumSchool"><div class="card-head"><h2>Students by School</h2></div><div class="summary-body"></div></article>
+        <article class="card summary" id="sumCentre"><div class="card-head"><h2>Students by Exam Centre</h2></div><div class="summary-body"></div></article>
+        <article class="card summary" id="sumScholarship"><div class="card-head"><h2>Scholarship Summary</h2></div><div class="summary-body"></div></article>
+        <article class="card summary" id="sumExam"><div class="card-head"><h2>JEE/NEET Summary</h2></div><div class="summary-body"></div></article>
+      </div>
+
+      <!-- Student table -->
+      <section class="card" aria-labelledby="studentsHeading">
+        <div class="card-head card-head-wrap">
+          <div>
+            <h2 id="studentsHeading">Students</h2>
+            <p id="dashInfo" class="muted" aria-live="polite"></p>
+          </div>
+          <div class="btn-group">
+            <button id="dashCopyBtn" class="btn btn-secondary" type="button">Copy to Excel</button>
+            <button id="dashCsvBtn" class="btn btn-secondary" type="button">Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap" tabindex="0" role="region" aria-labelledby="studentsHeading">
+          <table id="dashTable" class="data-table"></table>
+        </div>
+        <nav id="dashPager" class="pager" aria-label="Student table pages"></nav>
+      </section>
+    </section>
+
+    <!-- ===================== SCHOOLS ===================== -->
+    <section id="view-schools" class="view" aria-labelledby="schoolsHeading" hidden>
+      <h2 id="schoolsHeading" class="sr-only">Schools</h2>
+
+      <section class="card school-picker">
+        <label for="schoolInput" class="picker-label">Select School</label>
+        <div class="combo">
+          <div class="combo-box">
+            <input id="schoolInput" type="text" role="combobox" autocomplete="off"
+                   aria-autocomplete="list" aria-expanded="false" aria-controls="schoolList"
+                   placeholder="Type to search schools…">
+            <button id="schoolClear" type="button" class="combo-clear" aria-label="Clear selected school" hidden>&times;</button>
+          </div>
+          <ul id="schoolList" class="combo-list" role="listbox" aria-label="Schools" hidden></ul>
+        </div>
+        <p id="schoolCountNote" class="muted small"></p>
+      </section>
+
+      <section id="schoolPlaceholder" class="card state-inline">
+        <p>Select a school to view students</p>
+      </section>
+
+      <section id="schoolDetail" hidden>
+        <div class="card school-head">
+          <div>
+            <h2 id="schoolName"></h2>
+            <p id="schoolMeta" class="muted"></p>
+          </div>
+          <p class="school-count">Students: <strong id="schoolCount"></strong></p>
+        </div>
+
+        <div class="kpi-grid kpi-grid-6">
+          <article class="kpi"><h3 class="kpi-label">Students in School</h3><p class="kpi-value" id="statStudents">—</p></article>
+          <article class="kpi"><h3 class="kpi-label">Average Total</h3><p class="kpi-value" id="statAvg">—</p></article>
+          <article class="kpi"><h3 class="kpi-label">Top Rank</h3><p class="kpi-value" id="statTopRank">—</p></article>
+          <article class="kpi"><h3 class="kpi-label">JEE Count</h3><p class="kpi-value" id="statJee">—</p></article>
+          <article class="kpi"><h3 class="kpi-label">NEET Count</h3><p class="kpi-value" id="statNeet">—</p></article>
+          <article class="kpi"><h3 class="kpi-label">Scholarship Count</h3><p class="kpi-value" id="statScholar">—</p></article>
+        </div>
+
+        <section class="card" aria-labelledby="schoolTableHeading">
+          <div class="card-head card-head-wrap">
+            <div>
+              <h3 id="schoolTableHeading">Student List</h3>
+              <p id="schoolInfo" class="muted" aria-live="polite"></p>
+            </div>
+            <div class="btn-group">
+              <button id="schoolCopyBtn" class="btn btn-primary" type="button">Copy to Excel</button>
+              <button id="schoolCsvBtn" class="btn btn-secondary" type="button">Export CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap" tabindex="0" role="region" aria-labelledby="schoolTableHeading">
+            <table id="schoolTable" class="data-table"></table>
+          </div>
+          <nav id="schoolPager" class="pager" aria-label="School student table pages"></nav>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <footer class="app-footer container">
+    <p>Data source: Google Sheets (read-only). Figures update when you click <strong>Refresh Data</strong>.</p>
+  </footer>
+
+  <div id="announcer" class="sr-only" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+</html>
