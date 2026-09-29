@@ -10,7 +10,7 @@
 // Paste your Google Apps Script Web App URL between the quotes.
 // It looks like: https://script.google.com/macros/s/AKfycb..../exec
 // Do NOT put passwords, keys or tokens in this file — it is public.
-const API_URL = "https://script.google.com/macros/s/AKfycbzA9CrGfKN2jpvp6W75zIDGAoMl9GokphyAJSbdj5kDuzp5GtdNMj1xnLOctax_Su0/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwO_mttNvJVxcRpB6y12N59AybgAUObbbYId7P86ucnFt2fOJQgkRvG_Pw_UTy4njVLEw/exec";
 
 // Optional: how many rows each table page shows.
 const PAGE_SIZE = 50;
